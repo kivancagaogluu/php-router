@@ -125,6 +125,12 @@ class Router
      */
     protected $middlewareGroups = [];
 
+
+    /**
+     * @var array $middlewareExceptions Middleware Exceptions
+     */
+    protected $middlewareExceptions = [];
+
     /**
      * @var RouterRequest
      */
@@ -288,7 +294,9 @@ class Router
             // Direct Route Match
             if ($route === $uri) {
                 $foundRoute = true;
-                $this->runRouteMiddleware($data, 'before');
+                if(!in_array($uri, $this->middlewareExceptions)){
+                    $this->runRouteMiddleware($data, 'before');
+                }
                 $this->runRouteCommand($data['callback']);
                 $this->runRouteMiddleware($data, 'after');
                 break;
@@ -348,6 +356,15 @@ class Router
         $group['before'] = $this->calculateMiddleware($options['before'] ?? []);
         $group['after'] = $this->calculateMiddleware($options['after'] ?? []);
 
+        if(isset($options['except'])){
+            if(is_array($options['except'])){
+                foreach ($options['except'] as $except) {
+                    $this->middlewareExceptions[] = $except;
+                }
+            }else{
+                $this->middlewareExceptions[] = $options['except'];
+            }
+        }
         array_push($this->groups, $group);
 
         if (is_object($callback)) {
